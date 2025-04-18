@@ -6,5 +6,5 @@ Resources:
         TaskDefinition: <TASK_DEFINITION>
         LoadBalancerInfo:
           ContainerName: "myapp"
-          ContainerPort: 80
+          ContainerPort: 8080
         PlatformVersion: "LATEST"
