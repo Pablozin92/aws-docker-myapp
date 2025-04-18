@@ -1,0 +1,23 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - $(aws ecr get-login --no-include-email --region $AWS_REGION)
+      - REPOSITORY_URI=<account-id>.dkr.ecr.$AWS_REGION.amazonaws.com/myapp
+  build:
+    commands:
+      - echo Building the Docker image...
+      - docker build -t myapp .
+      - docker tag myapp:latest $REPOSITORY_URI:latest
+  post_build:
+    commands:
+      - echo Pushing Docker image to ECR...
+      - docker push $REPOSITORY_URI:latest
+      - echo Writing image definitions...
+      - |
+        printf '[{"name":"myapp","imageUri":"%s"}]' $REPOSITORY_URI:latest > imagedefinitions.json
+artifacts:
+  files: imagedefinitions.json
+
