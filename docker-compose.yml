@@ -1,48 +1,55 @@
-version: '3.9'
+version: "3.9"
 
 services:
-    app:
-        image: myapp:latest
-        build:
-            context: .
-            dockerfile: Dockerfile
-        secrets:
-             - mysql_user
-             - mysql_password
-        environment:
-             - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/mydb
-             - SPRING_DATASOURCE_USERNAME=/run/secrets/mysql_user
-             - SPRING_DATASOURCE_PASSWORD=/run/secrets/mysql_password
-        ports:
-             - "8080:8080"
-        depends_on:
-             - db
-        networks:
-             - backend
-    
-    db:
-        image: mysql:8.0
-        restart: always
-        environment:
-            - MYSQL_DATABASE: mydb
-        secrets:
-            - mysql_root_password
-            - mysql_user
-            - mysql_password
-        volumes:
-            - db_data:/var/lib/mysql
-        networks:
-            - backend
+  app:
+    image: myapp:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    secrets:
+      - mysql_user
+      - mysql_password
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/mydb
+      - SPRING_DATASOURCE_USERNAME=myuser
+      - SPRING_DATASOURCE_PASSWORD=securepass
+      #- SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/mydb
+      #- SPRING_DATASOURCE_USERNAME=/run/secrets/mysql_user
+      #- SPRING_DATASOURCE_PASSWORD=/run/secrets/mysql_password
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    networks:
+      - backend
+
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      - MYSQL_DATABASE=mydb
+      - MYSQL_USER=myuser
+      - MYSQL_PASSWORD=securepass
+      - MYSQL_ROOT_PASSWORD=supersecure
+      #- MYSQL_DATABASE: mydb
+    secrets:
+      - mysql_root_password
+      - mysql_user
+      - mysql_password
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - backend
 secrets:
-    mysql_root_password:
-        file: ./secrets/mysql_root_password
-    mysql_user:
-        file: ./secrets/mysql_user
-    mysql_password:
-        file: ./secrets/mysql_password
+  mysql_root_password:
+    file: ./secrets/mysql_root_password
+  mysql_user:
+    file: ./secrets/mysql_user
+  mysql_password:
+    file: ./secrets/mysql_password
 volumes:
-    db_data:
+  db_data:
 
 networks:
-    backend:
-        driver: bridge
+  backend:
+    driver: bridge
