@@ -8,9 +8,17 @@ phases:
     commands:
       - echo "Run security scan or test here"
       # Example: run Trivy
+      - wget https://github.com/aquasecurity/trivy/releases/download/v0.51.1/trivy_0.51.1_Linux-64bit.tar.gz
+      - tar -zxvf trivy_0.51.1_Linux-64bit.tar.gz
+      - sudo mv trivy /usr/local/bin/
+      - echo "Scanning with Trivy (non-blocking)..."
+      - trivy image myapp --severity HIGH,CRITICAL --format table --output trivy-report.txt --exit-code 0
+      - echo Failing if CRITICAL vulns found...
       - |
-        curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -
-        ./trivy image myapp || true
+        trivy image myapp --severity CRITICAL --exit-code 1 || {
+          echo "❌ CRITICAL vulns found in image! Check report.";
+          exit 1;
+        }
   post_build:
     commands:
       - echo "Test stage completed!"
