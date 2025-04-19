@@ -12,6 +12,14 @@ phases:
     commands:
       - echo Building the Docker image...
       - docker build -t myapp .
+      - echo Installing Trivy for vulnerability scanning...
+      - curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh
+
+      - echo Scanning Docker image with Trivy...
+      - ./trivy image myapp --exit-code 1 --severity HIGH,CRITICAL
+
+      # If scan passes, continue to tag
+      - echo Tagging Docker image for ECR...
       - docker tag myapp:latest $REPOSITORY_URI:latest
   post_build:
     commands:
