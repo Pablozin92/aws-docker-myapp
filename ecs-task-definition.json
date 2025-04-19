@@ -1,0 +1,66 @@
+name: docker_harden_image_test
+services:
+  app:
+    build:
+      context: /Users/zinminhtike/Documents/Docker/Docker_Harden_Image_Test
+      dockerfile: Dockerfile
+    depends_on:
+      db:
+        condition: service_started
+        required: true
+    environment:
+      SPRING_DATASOURCE_PASSWORD: securepass
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/mydb
+      SPRING_DATASOURCE_USERNAME: myuser
+    image: myapp:latest
+    networks:
+      backend: null
+    ports:
+      - mode: ingress
+        target: 8080
+        published: "8080"
+        protocol: tcp
+    secrets:
+      - source: mysql_user
+        target: /run/secrets/mysql_user
+      - source: mysql_password
+        target: /run/secrets/mysql_password
+  db:
+    environment:
+      MYSQL_DATABASE: mydb
+      MYSQL_PASSWORD: securepass
+      MYSQL_ROOT_PASSWORD: supersecure
+      MYSQL_USER: myuser
+    image: mysql:8.0
+    networks:
+      backend: null
+    restart: always
+    secrets:
+      - source: mysql_root_password
+        target: /run/secrets/mysql_root_password
+      - source: mysql_user
+        target: /run/secrets/mysql_user
+      - source: mysql_password
+        target: /run/secrets/mysql_password
+    volumes:
+      - type: volume
+        source: db_data
+        target: /var/lib/mysql
+        volume: {}
+networks:
+  backend:
+    name: docker_harden_image_test_backend
+    driver: bridge
+volumes:
+  db_data:
+    name: docker_harden_image_test_db_data
+secrets:
+  mysql_password:
+    name: docker_harden_image_test_mysql_password
+    file: /Users/zinminhtike/Documents/Docker/Docker_Harden_Image_Test/secrets/mysql_password
+  mysql_root_password:
+    name: docker_harden_image_test_mysql_root_password
+    file: /Users/zinminhtike/Documents/Docker/Docker_Harden_Image_Test/secrets/mysql_root_password
+  mysql_user:
+    name: docker_harden_image_test_mysql_user
+    file: /Users/zinminhtike/Documents/Docker/Docker_Harden_Image_Test/secrets/mysql_user

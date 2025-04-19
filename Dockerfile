@@ -1,5 +1,5 @@
 # Stage 1: Build using Maven
-FROM maven:3.9.6-eclipse-temurin-17 AS builder
+FROM eclipse-temurin:17-alpine AS builder
 
 # Set working directory inside the container
 WORKDIR /app
@@ -15,7 +15,7 @@ RUN mvn clean package -DskipTests
 # RUN ls -lah target/
 
 # Stage 2: Run with a slim base image
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:17-alpine
 
 # Create a non-root user
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
