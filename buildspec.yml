@@ -13,17 +13,14 @@ phases:
 
   build:
     commands:
-      - echo Building Docker image...
+      - echo "Building the Docker image..."
       - docker build -t myapp .
-
       - echo Installing Trivy...
       - wget https://github.com/aquasecurity/trivy/releases/download/v0.51.1/trivy_0.51.1_Linux-64bit.tar.gz
       - tar -zxvf trivy_0.51.1_Linux-64bit.tar.gz
       - sudo mv trivy /usr/local/bin/
-
-      - echo Scanning with Trivy (non-blocking)...
+      - echo "Scanning with Trivy (non-blocking)..."
       - trivy image myapp --severity HIGH,CRITICAL --format table --output trivy-report.txt --exit-code 0
-
       - echo Failing if CRITICAL vulns found...
       - |
         trivy image myapp --severity CRITICAL --exit-code 1 || {
