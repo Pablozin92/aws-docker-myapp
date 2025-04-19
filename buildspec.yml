@@ -5,29 +5,48 @@ phases:
     commands:
       - echo Logging in to Docker Hub...
       - echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+
       - echo Logging in to Amazon ECR...
       - aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin 386757133791.dkr.ecr.ap-southeast-1.amazonaws.com
+
       - REPOSITORY_URI=386757133791.dkr.ecr.ap-southeast-1.amazonaws.com/aws-docker-myapp
+
   build:
     commands:
       - echo Building the Docker image...
       - docker build -t myapp .
-      - echo Installing Trivy for vulnerability scanning...
-      - curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh
+
+      - echo Installing Trivy...
+      - wget https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.50.1_Linux-64bit.tar.gz
+      - tar zxvf trivy_0.50.1_Linux-64bit.tar.gz
+      - sudo mv trivy /usr/local/bin/
 
       - echo Scanning Docker image with Trivy...
-      - ./trivy image myapp --exit-code 1 --severity HIGH,CRITICAL
+      - trivy image myapp --severity HIGH,CRITICAL --format table --output trivy-report.txt --exit-code 0
 
-      # If scan passes, continue to tag
-      - echo Tagging Docker image for ECR...
+      - echo Failing build if CRITICAL vulnerabilities found...
+      - |
+        trivy image myapp --severity CRITICAL --exit-code 1 || {
+          echo "❌ Critical vulnerabilities found! Check trivy-report.txt";
+          exit 1;
+        }
+
+      - echo Tagging image...
       - docker tag myapp:latest $REPOSITORY_URI:latest
+
   post_build:
     commands:
       - echo Pushing Docker image to ECR...
       - docker push $REPOSITORY_URI:latest
+
+      - echo Uploading Trivy report to S3...
+      - aws s3 cp trivy-report.txt s3://aws-docker-myapp-bucket/reports/trivy-report-`date +%Y%m%d-%H%M%S`.txt
+
       - echo Writing image definitions...
-      - |
-        printf '[{"name":"myapp","imageUri":"%s"}]' $REPOSITORY_URI:latest > imagedefinitions.json
+      - printf '[{"name":"myapp","imageUri":"%s"}]' $REPOSITORY_URI:latest > imagedefinitions.json
+
 artifacts:
-  files: imagedefinitions.json
+  files:
+    - imagedefinitions.json
+
 
