@@ -37,7 +37,7 @@ phases:
       - docker push $REPOSITORY_URI:latest
 
       - echo Uploading Trivy report to S3...
-      - aws s3 cp trivy-report.txt s3://your-s3-bucket-name/reports/trivy-report-`date +%Y%m%d-%H%M%S`.txt
+      - aws s3 cp trivy-report.txt s3://aws-docker-myapp-bucket/reports/trivy-report-`date +%Y%m%d-%H%M%S`.txt
 
       - echo Writing image definition...
       - printf '[{"name":"myapp","imageUri":"%s"}]' $REPOSITORY_URI:latest > imagedefinitions.json
