@@ -1,0 +1,19 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo "Starting Test Stage..."
+  build:
+    commands:
+      - echo "Run security scan or test here"
+      # Example: run Trivy
+      - |
+        curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -
+        ./trivy image myapp || true
+  post_build:
+    commands:
+      - echo "Test stage completed!"
+artifacts:
+  files:
+    - '**/*'
