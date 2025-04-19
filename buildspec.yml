@@ -13,40 +13,38 @@ phases:
 
   build:
     commands:
-      - echo Building the Docker image...
+      - echo Building Docker image...
       - docker build -t myapp .
 
       - echo Installing Trivy...
-      - wget https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.50.1_Linux-64bit.tar.gz
-      - tar zxvf trivy_0.50.1_Linux-64bit.tar.gz
+      - wget https://github.com/aquasecurity/trivy/releases/download/v0.51.1/trivy_0.51.1_Linux-64bit.tar.gz
+      - tar -zxvf trivy_0.51.1_Linux-64bit.tar.gz
       - sudo mv trivy /usr/local/bin/
 
-      - echo Scanning Docker image with Trivy...
+      - echo Scanning with Trivy (non-blocking)...
       - trivy image myapp --severity HIGH,CRITICAL --format table --output trivy-report.txt --exit-code 0
 
-      - echo Failing build if CRITICAL vulnerabilities found...
+      - echo Failing if CRITICAL vulns found...
       - |
         trivy image myapp --severity CRITICAL --exit-code 1 || {
-          echo "❌ Critical vulnerabilities found! Check trivy-report.txt";
+          echo "❌ CRITICAL vulns found in image! Check report.";
           exit 1;
         }
 
-      - echo Tagging image...
+      - echo Tagging Docker image...
       - docker tag myapp:latest $REPOSITORY_URI:latest
 
   post_build:
     commands:
-      - echo Pushing Docker image to ECR...
+      - echo Pushing image to ECR...
       - docker push $REPOSITORY_URI:latest
 
       - echo Uploading Trivy report to S3...
-      - aws s3 cp trivy-report.txt s3://aws-docker-myapp-bucket/reports/trivy-report-`date +%Y%m%d-%H%M%S`.txt
+      - aws s3 cp trivy-report.txt s3://your-s3-bucket-name/reports/trivy-report-`date +%Y%m%d-%H%M%S`.txt
 
-      - echo Writing image definitions...
+      - echo Writing image definition...
       - printf '[{"name":"myapp","imageUri":"%s"}]' $REPOSITORY_URI:latest > imagedefinitions.json
 
 artifacts:
   files:
     - imagedefinitions.json
-
-
